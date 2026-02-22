@@ -3,9 +3,7 @@ import type {
   ExtensionCommandContext,
 } from "@mariozechner/pi-coding-agent";
 import type { TUI } from "@mariozechner/pi-tui";
-import { executeAction } from "./actions.js";
 import { loadFzfConfig, type ResolvedCommand } from "./config.js";
-import { FuzzySelector, type SelectorTheme } from "./selector.js";
 
 export default function (pi: ExtensionAPI) {
   let commands: ResolvedCommand[] = [];
@@ -69,11 +67,13 @@ async function runFzfSelector(
   // Capture tui reference so we can request a render after the overlay closes
   let tuiRef: TUI | undefined;
 
+  const { FuzzySelector } = await import("./selector.js");
+
   const selected = await ctx.ui.custom<string | null>(
     (tui, theme, _kb, done) => {
       tuiRef = tui;
 
-      const selectorTheme: SelectorTheme = {
+      const selectorTheme = {
         accent: (t) => theme.fg("accent", t),
         muted: (t) => theme.fg("muted", t),
         dim: (t) => theme.fg("dim", t),
@@ -118,6 +118,7 @@ async function runFzfSelector(
 
   // 3. If user selected something, execute the action
   if (selected !== null) {
+    const { executeAction } = await import("./actions.js");
     await executeAction(cmd.action, selected, pi, ctx);
     // Explicitly request render to ensure the editor shows
     // the new text after the overlay closed
